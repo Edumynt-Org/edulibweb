@@ -16,7 +16,10 @@ export class AnonymousConnector implements PowerSyncBackendConnector {
   }
 
   async uploadData(database: any) {
-    // Read-only catalog; nothing to upload for anonymous guest
+    const batch = await database.getCrudBatch();
+    if (!batch) return;
+    // For now, discard local changes to prevent blocking the upload queue
+    await batch.complete();
   }
 }
 
