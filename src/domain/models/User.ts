@@ -3,6 +3,7 @@ export interface AppUser {
   role: string;
   isAnonymous: boolean;
   email?: string;
+  username?: string;
   displayName?: string;
   currentStreak?: number;
   lastStreakDate?: string;

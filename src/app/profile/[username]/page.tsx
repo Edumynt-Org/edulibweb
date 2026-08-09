@@ -5,7 +5,9 @@ import { useParams, useRouter } from 'next/navigation';
 import { UserShelf } from '../../../domain/models/UserShelf';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import Link from 'next/link';
-
+import { clearTokens } from '../../../actions/auth';
+import { ClientTokenStorage } from '../../../data/auth/ClientTokenStorage';
+import { DirectusAuthRepository } from '../../../data/directus/DirectusAuthRepository';
 export default function ProfilePage() {
   const params = useParams();
   const username = params.username as string;
@@ -19,6 +21,35 @@ export default function ProfilePage() {
   
   const [readingStats, setReadingStats] = useState<any>(null);
   const [achievements, setAchievements] = useState<any[]>([]);
+
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    if (typeof document !== 'undefined' && document.documentElement.classList.contains('dark')) {
+      setIsDarkMode(true);
+    }
+  }, []);
+
+  const toggleDarkMode = () => {
+    if (isDarkMode) {
+      document.documentElement.classList.remove('dark');
+      setIsDarkMode(false);
+    } else {
+      document.documentElement.classList.add('dark');
+      setIsDarkMode(true);
+    }
+  };
+
+  const handleLogout = async () => {
+    const tokenStorage = new ClientTokenStorage();
+    const directusUrl = process.env.NEXT_PUBLIC_DIRECTUS_URL || 'http://localhost:8056';
+    const authRepo = new DirectusAuthRepository(directusUrl, tokenStorage);
+    try { await authRepo.logout(); } catch(e) {}
+    await clearTokens();
+    router.push('/login');
+    router.refresh();
+  };
 
   useEffect(() => {
     loadProfileData();
@@ -50,29 +81,94 @@ export default function ProfilePage() {
 
   return (
     <div className="p-6 sm:p-8 max-w-7xl mx-auto">
-      <div className="mb-12 text-center md:text-left flex flex-col md:flex-row items-center gap-6">
-        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-3xl text-white font-bold uppercase shadow-lg shrink-0">
-          {username.charAt(0)}
-        </div>
-        <div className="flex-1">
-          <h1 className="text-4xl font-bold tracking-tight mb-2">{username}'s Profile</h1>
-          <p className="text-zinc-500 text-lg mb-3">Public Bookshelves & Stats</p>
-          <div className="flex flex-wrap gap-3 items-center justify-center md:justify-start">
-            {streak > 0 && (
-              <div className="flex items-center gap-2 text-orange-600 dark:text-orange-400 font-semibold bg-orange-50 dark:bg-orange-900/30 px-3 py-1.5 rounded-lg w-fit">
-                <span>🔥</span>
-                <span>{streak} Day Streak</span>
-              </div>
-            )}
-            {achievements.slice(0, 3).map((badge, idx) => (
-              <div key={idx} className="flex items-center gap-1.5 text-blue-700 dark:text-blue-300 font-semibold bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-lg" title={badge.description}>
-                <span>{badge.badge_icon}</span>
-                <span className="text-sm">{badge.name}</span>
-              </div>
-            ))}
+      <div className="mb-12 flex flex-col md:flex-row items-center md:items-start justify-between gap-6 relative">
+        <div className="flex flex-col md:flex-row items-center gap-6 flex-1 text-center md:text-left">
+          <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-3xl text-white font-bold uppercase shadow-lg shrink-0">
+            {username.charAt(0)}
+          </div>
+          <div className="flex-1">
+            <h1 className="text-4xl font-bold tracking-tight mb-2">{username}'s Profile</h1>
+            <p className="text-zinc-500 text-lg mb-3">Public Bookshelves & Stats</p>
+            <div className="flex flex-wrap gap-3 items-center justify-center md:justify-start">
+              {streak > 0 && (
+                <div className="flex items-center gap-2 text-orange-600 dark:text-orange-400 font-semibold bg-orange-50 dark:bg-orange-900/30 px-3 py-1.5 rounded-lg w-fit">
+                  <span>🔥</span>
+                  <span>{streak} Day Streak</span>
+                </div>
+              )}
+              {achievements.slice(0, 3).map((badge, idx) => (
+                <div key={idx} className="flex items-center gap-1.5 text-blue-700 dark:text-blue-300 font-semibold bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-lg" title={badge.description}>
+                  <span>{badge.badge_icon}</span>
+                  <span className="text-sm">{badge.name}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
+        
+        {/* Settings Icon */}
+        <button 
+          onClick={() => setIsSettingsOpen(true)}
+          className="absolute top-0 right-0 md:relative p-2 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800"
+          aria-label="Settings"
+        >
+          <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        </button>
       </div>
+
+      {/* Settings Modal */}
+      {isSettingsOpen && (
+        <div className="fixed inset-0 z-50 bg-white dark:bg-black flex flex-col animate-in fade-in zoom-in-95 duration-200">
+          <div className="p-4 flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800">
+            <h2 className="text-xl font-bold">Settings</h2>
+            <button 
+              onClick={() => setIsSettingsOpen(false)}
+              className="p-2 text-zinc-500 hover:text-zinc-900 dark:hover:text-white bg-zinc-100 dark:bg-zinc-800 rounded-full"
+            >
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-6 space-y-8 max-w-2xl mx-auto w-full">
+            
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-zinc-500">Preferences</h3>
+              <div className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                <div>
+                  <div className="font-semibold text-lg">Dark Mode</div>
+                  <div className="text-zinc-500 text-sm">Toggle application theme</div>
+                </div>
+                <button 
+                  onClick={toggleDarkMode}
+                  className={`w-14 h-8 rounded-full transition-colors relative ${isDarkMode ? 'bg-blue-600' : 'bg-zinc-300 dark:bg-zinc-700'}`}
+                >
+                  <div className={`absolute top-1 left-1 bg-white w-6 h-6 rounded-full transition-transform ${isDarkMode ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-zinc-500">Account</h3>
+              <button 
+                onClick={handleLogout}
+                className="w-full flex items-center justify-between p-4 bg-red-50 dark:bg-red-950/30 text-red-600 rounded-xl border border-red-100 dark:border-red-900/50 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors text-left"
+              >
+                <div>
+                  <div className="font-semibold text-lg">Log Out</div>
+                  <div className="text-red-500/80 text-sm">Sign out of your account on this device</div>
+                </div>
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="flex border-b border-zinc-200 dark:border-zinc-800 mb-8">
         <button

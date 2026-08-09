@@ -52,6 +52,7 @@ export class DirectusAuthRepository implements IAuthRepository {
     return {
       id: result.data.id,
       email: result.data.email,
+      username: result.data.username || result.data.first_name || result.data.email,
       displayName: result.data.first_name,
       role: result.data.role,
       isAnonymous: false,
@@ -90,6 +91,7 @@ export class DirectusAuthRepository implements IAuthRepository {
     return {
       id: userResult.data.id,
       email: userResult.data.email,
+      username: userResult.data.username || userResult.data.first_name || userResult.data.email,
       displayName: userResult.data.first_name,
       role: userResult.data.role,
       isAnonymous: false,
@@ -167,6 +169,7 @@ export class DirectusAuthRepository implements IAuthRepository {
     return {
       id: result.data.id,
       email: result.data.email,
+      username: result.data.username || result.data.first_name || result.data.email,
       displayName: result.data.first_name,
       role: '0e0d3c31-4754-4856-bbe8-71ff7803e082',
       isAnonymous: false,

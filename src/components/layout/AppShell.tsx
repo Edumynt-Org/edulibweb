@@ -49,6 +49,11 @@ export function AppShell({ children, isAuthenticated }: AppShellProps) {
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
       </svg>
     )},
+    ...(isAuthenticated ? [{ name: 'Profile', href: '/profile', icon: (
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+      </svg>
+    )}] : []),
   ];
 
   return (
@@ -74,11 +79,7 @@ export function AppShell({ children, isAuthenticated }: AppShellProps) {
           })}
         </nav>
         <div className="p-4 border-t border-zinc-200 dark:border-zinc-800">
-          {isAuthenticated ? (
-            <button onClick={handleLogout} className="w-full text-left px-4 py-3 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-colors">
-              Log out
-            </button>
-          ) : (
+          {!isAuthenticated && (
             <div className="flex flex-col gap-2">
               <Link href="/login" className="px-4 py-2 text-center border border-zinc-300 dark:border-zinc-700 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-900">
                 Log In
@@ -121,12 +122,6 @@ export function AppShell({ children, isAuthenticated }: AppShellProps) {
                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </button>
-            {/* Profile Icon */}
-            {isAuthenticated && (
-              <button className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-medium">
-                P
-              </button>
-            )}
           </div>
         </header>
 
@@ -151,6 +146,17 @@ export function AppShell({ children, isAuthenticated }: AppShellProps) {
             </Link>
           );
         })}
+        {!isAuthenticated && (
+          <Link 
+            href="/login"
+            className={`flex flex-col items-center p-2 rounded-lg ${pathname === '/login' ? 'text-blue-600' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100'}`}
+          >
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H9a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            <span className="text-xs mt-1 font-medium">Log In</span>
+          </Link>
+        )}
       </div>
     </div>
   );
