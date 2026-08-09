@@ -2,8 +2,7 @@ import { PowerSyncBackendConnector, PowerSyncCredentials, PowerSyncDatabase } fr
 
 export class PowerSyncConnector implements PowerSyncBackendConnector {
   async fetchCredentials(): Promise<PowerSyncCredentials> {
-    const directusUrl = process.env.NEXT_PUBLIC_DIRECTUS_URL || 'http://localhost:8056';
-    const response = await fetch(`${directusUrl}/powersync/token`);
+    const response = await fetch(`/api/powersync-token`);
     if (!response.ok) {
       throw new Error(`Failed to fetch PowerSync token: ${response.status}`);
     }
@@ -15,6 +14,29 @@ export class PowerSyncConnector implements PowerSyncBackendConnector {
   }
 
   async uploadData(database: PowerSyncDatabase): Promise<void> {
-    // Read-only catalog — nothing to upload
+    const transaction = await database.getNextCrudTransaction();
+    if (!transaction) return;
+
+    try {
+      const response = await fetch('/api/powersync-upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(transaction.crud)
+      });
+      
+      if (!response.ok) {
+        console.error('Failed to upload data:', response.status);
+        // Throwing will let PowerSync retry later if it's a network issue,
+        // but if it's a 403 (permissions), we might want to discard. For now, complete it to clear the queue if 4xx.
+        if (response.status >= 500) {
+          throw new Error('Server error during upload');
+        }
+      }
+
+      await transaction.complete();
+    } catch (error) {
+      console.error('Data upload error:', error);
+      throw error; // Retries later
+    }
   }
 }
