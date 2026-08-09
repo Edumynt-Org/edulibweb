@@ -4,4 +4,6 @@ export interface AppUser {
   isAnonymous: boolean;
   email?: string;
   displayName?: string;
+  currentStreak?: number;
+  lastStreakDate?: string;
 }

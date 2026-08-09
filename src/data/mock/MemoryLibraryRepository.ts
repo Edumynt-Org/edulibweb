@@ -8,6 +8,7 @@ import { ReadingPreferences, DefaultReadingPreferences } from '../../domain/mode
 import { Annotation } from '../../domain/models/Annotation';
 import { DictionaryEntry } from '../../domain/models/DictionaryEntry';
 import { AudioProgress } from '../../domain/models/AudioProgress';
+import { Review, ReviewDraft } from '../../domain/models/Review';
 
 const SAMPLE_BOOKS: Book[] = [
   {
@@ -34,6 +35,7 @@ export class MemoryLibraryRepository implements ILibraryRepository {
   private annotations: Annotation[] = [];
   private dictionaryCache: Record<string, DictionaryEntry> = {};
   private audioProgress: AudioProgress[] = [];
+  private reviews: Review[] = [];
 
   async getCatalogBooks(): Promise<Book[]> {
     return [...this.books];
@@ -105,6 +107,80 @@ export class MemoryLibraryRepository implements ILibraryRepository {
 
   async updateChapterProgress(chapterId: string, progressPercent: number, scrollPosition: number): Promise<void> {
     console.log(`Mock: Updated progress for chapter ${chapterId} to ${progressPercent}% (scroll: ${scrollPosition}px)`);
+  }
+
+  async updateBookStatus(bookId: string, status: string): Promise<void> {
+    console.log(`Mock updateBookStatus ${bookId} ${status}`);
+  }
+
+  async createCustomShelf(name: string, isPrivate: boolean, description?: string): Promise<any> {
+    return {
+      id: crypto.randomUUID(),
+      profileId: 'guest',
+      name,
+      slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      description,
+      isPrivate,
+      sortOrder: 0,
+      dateCreated: new Date().toISOString(),
+      dateUpdated: new Date().toISOString()
+    };
+  }
+
+  async addBookToShelf(shelfId: string, bookId: string): Promise<void> {}
+  async removeBookFromShelf(shelfId: string, bookId: string): Promise<void> {}
+  async reorderShelf(shelfId: string, bookIds: string[]): Promise<void> {}
+  async getDailyStreakCount(profileId: string): Promise<number> {
+    return 0;
+  }
+
+  async getReadingStats(profileId: string): Promise<{
+    totalBooksFinished: number;
+    totalPagesRead: number;
+    totalHoursListened: number;
+    pagesByMonth: { month: string; pages: number }[];
+    hoursByMonth: { month: string; hours: number }[];
+  }> {
+    return {
+      totalBooksFinished: 0,
+      totalPagesRead: 0,
+      totalHoursListened: 0,
+      pagesByMonth: [],
+      hoursByMonth: []
+    };
+  }
+
+  async getUserAchievements(profileId: string): Promise<{
+    id: string;
+    achievement_id: string;
+    awarded_at: string;
+    name: string;
+    description: string;
+    badge_icon: string;
+  }[]> {
+    return [];
+  }
+
+  async getPublicShelves(profileId: string): Promise<any[]> { return []; }
+  async getUserShelves(): Promise<any[]> { return []; }
+  async getShelfItems(shelfId: string): Promise<any[]> { return []; }
+
+  async createReview(review: ReviewDraft): Promise<Review> {
+    if (review.rating < 0 || review.rating > 5 || !Number.isInteger(review.rating * 2)) {
+      throw new Error('Ratings must be between 0 and 5 in 0.5 increments.');
+    }
+    const now = new Date().toISOString();
+    const created: Review = { id: crypto.randomUUID(), ...review, status: 'published', dateCreated: now, dateUpdated: now };
+    this.reviews.unshift(created);
+    return created;
+  }
+
+  async getReviewsForBook(bookId: string): Promise<Review[]> {
+    return this.reviews.filter((review) => review.bookId === bookId && review.status === 'published');
+  }
+
+  async getReviewsByUser(profileId: string): Promise<Review[]> {
+    return this.reviews.filter((review) => review.profileId === profileId);
   }
 
   async getReadingPreferences(): Promise<ReadingPreferences> {

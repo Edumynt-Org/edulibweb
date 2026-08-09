@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { DirectusAuthRepository } from '../../data/directus/DirectusAuthRepository';
 import { ClientTokenStorage } from '../../data/auth/ClientTokenStorage';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useSyncConnector } from '../../lib/providers/LibraryProvider';
 
 export default function LoginForm() {
   const [email, setEmail] = useState('');
@@ -11,6 +12,8 @@ export default function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const syncConnector = useSyncConnector();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,10 +23,15 @@ export default function LoginForm() {
     try {
       // Setup the auth repository with token storage
       const tokenStorage = new ClientTokenStorage();
-      const authRepo = new DirectusAuthRepository('http://localhost:8056', tokenStorage);
+      const authRepo = new DirectusAuthRepository('http://localhost:8056', tokenStorage, syncConnector);
       
       await authRepo.login(email, password);
-      router.push('/');
+      const redirect = searchParams.get('redirect');
+      if (redirect) {
+        router.push(redirect);
+      } else {
+        router.push('/');
+      }
       router.refresh();
     } catch (err: any) {
       setError(err.message || 'Login failed');

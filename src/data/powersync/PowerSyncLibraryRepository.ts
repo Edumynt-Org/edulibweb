@@ -3,6 +3,7 @@ import { ILibraryRepository } from '../../domain/repositories/ILibraryRepository
 import { Book } from '../../domain/models/Book';
 import { BookDetails } from '../../domain/models/BookDetails';
 import { BookList } from '../../domain/models/BookList';
+import { Review, ReviewDraft } from '../../domain/models/Review';
 import { AbstractPowerSyncDatabase } from '@powersync/web';
 
 export class PowerSyncLibraryRepository implements ILibraryRepository {
@@ -429,8 +430,20 @@ export class PowerSyncLibraryRepository implements ILibraryRepository {
   }
 
   async updateChapterProgress(chapterId: string, progressPercent: number, scrollPosition: number): Promise<void> {
+    const profileId = 'guest';
     try {
-      // Just a dummy for now since we don't have the auth user easily accessible here yet, and we need this to not crash.
+      const oldProgress = await this.getChapterProgress(chapterId);
+      
+      // Note: we should actually save the progress to chapter_progress here
+      
+      if (oldProgress) {
+        const advancement = progressPercent - oldProgress.progressPercent;
+        if (advancement >= 1) {
+          await this.calculateAndSyncDailyStreak();
+        }
+      } else if (progressPercent >= 1) {
+        await this.calculateAndSyncDailyStreak();
+      }
       console.log('Dummy update chapter progress', chapterId, progressPercent, scrollPosition);
     } catch (e: any) {
       console.warn('Failed to update chapter progress:', e);
@@ -458,6 +471,337 @@ export class PowerSyncLibraryRepository implements ILibraryRepository {
   }
 
   async saveAudioProgress(bookId: string, chapterId: string, positionSeconds: number): Promise<void> {
+    const profileId = 'guest';
+    try {
+      const apResult = await this.db.getOptional(`
+        SELECT progress_seconds FROM audio_progress WHERE audio_chapter = ? AND profile = ?
+      `, [chapterId, profileId]);
+      const apRow = apResult as any;
+      
+      if (apRow) {
+        const oldSeconds = apRow.progress_seconds;
+        if (positionSeconds - oldSeconds >= 300) { // 5 minutes = 300 seconds
+          await this.calculateAndSyncDailyStreak();
+        }
+      } else if (positionSeconds >= 300) {
+        await this.calculateAndSyncDailyStreak();
+      }
+    } catch (e) {
+      console.warn('Failed to save audio progress and check streak:', e);
+    }
     console.log('Dummy save audio progress', bookId, chapterId, positionSeconds);
+  }
+
+  async updateBookStatus(bookId: string, status: string): Promise<void> {
+    const profileId = 'guest'; 
+    try {
+      const existing = await this.db.getOptional(`
+        SELECT id FROM user_books WHERE book = ? AND profile = ?
+      `, [bookId, profileId]);
+      
+      const now = new Date().toISOString();
+      const dateFinished = status === 'completed' ? now : null;
+
+      if (existing) {
+        await this.db.execute(`
+          UPDATE user_books 
+          SET reading_status = ?, last_activity_at = ?, date_finished = ?
+          WHERE id = ?
+        `, [status, now, dateFinished, existing.id]);
+      } else {
+        const newId = crypto.randomUUID();
+        await this.db.execute(`
+          INSERT INTO user_books (id, profile, book, reading_status, date_started, date_finished, last_activity_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?)
+        `, [newId, profileId, bookId, status, now, dateFinished, now]);
+      }
+    } catch (e: any) {
+      console.error('Failed to update book status:', e);
+      throw e;
+    }
+  }
+
+  async createCustomShelf(name: string, isPrivate: boolean, description?: string): Promise<any> {
+    const profileId = 'guest';
+    const id = crypto.randomUUID();
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const now = new Date().toISOString();
+    
+    await this.db.execute(`
+      INSERT INTO user_shelves (id, profile, name, slug, description, is_private, sort_order, date_created, date_updated)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [id, profileId, name, slug, description || null, isPrivate ? 1 : 0, 0, now, now]);
+
+    return {
+      id, profileId, name, slug, description, isPrivate, sortOrder: 0, dateCreated: now, dateUpdated: now
+    };
+  }
+
+  async addBookToShelf(shelfId: string, bookId: string): Promise<void> {
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
+    
+    const result = await this.db.getOptional('SELECT MAX(sort_order) as max_sort FROM user_shelf_items WHERE shelf = ?', [shelfId]);
+    const nextSort = ((result as any)?.max_sort || 0) + 1;
+
+    await this.db.execute(`
+      INSERT INTO user_shelf_items (id, shelf, book, sort_order, date_added)
+      VALUES (?, ?, ?, ?, ?)
+    `, [id, shelfId, bookId, nextSort, now]);
+  }
+
+  async removeBookFromShelf(shelfId: string, bookId: string): Promise<void> {
+    await this.db.execute('DELETE FROM user_shelf_items WHERE shelf = ? AND book = ?', [shelfId, bookId]);
+  }
+
+  async reorderShelf(shelfId: string, bookIds: string[]): Promise<void> {
+    await this.db.writeTransaction(async (tx) => {
+      for (let i = 0; i < bookIds.length; i++) {
+        await tx.execute('UPDATE user_shelf_items SET sort_order = ? WHERE shelf = ? AND book = ?', [i, shelfId, bookIds[i]]);
+      }
+    });
+  }
+
+  async getPublicShelves(profileId: string): Promise<any[]> {
+    const rows = await this.db.getAll('SELECT * FROM user_shelves WHERE profile = ? AND is_private = 0 ORDER BY sort_order', [profileId]);
+    return rows.map(this.mapRecordToShelf);
+  }
+
+  async getUserShelves(): Promise<any[]> {
+    const profileId = 'guest';
+    const rows = await this.db.getAll('SELECT * FROM user_shelves WHERE profile = ? ORDER BY sort_order', [profileId]);
+    return rows.map(this.mapRecordToShelf);
+  }
+
+  async getShelfItems(shelfId: string): Promise<any[]> {
+    const rows = await this.db.getAll(`
+      SELECT si.*, b.title as book_title, b.slug as book_slug, b.cover as book_cover
+      FROM user_shelf_items si
+      JOIN books b ON si.book = b.id
+      WHERE si.shelf = ?
+      ORDER BY si.sort_order
+    `, [shelfId]);
+    
+    const directusUrl = process.env.NEXT_PUBLIC_DIRECTUS_URL || 'https://cms.edumynt.org';
+    const getCoverUrl = (coverId: string | null) => coverId ? `${directusUrl}/assets/${coverId}` : '';
+
+    return rows.map(r => ({
+      id: r.id,
+      shelfId: r.shelf,
+      bookId: r.book,
+      sortOrder: r.sort_order,
+      dateAdded: r.date_added,
+      book: {
+        id: r.book,
+        title: r.book_title,
+        slug: r.book_slug,
+        coverUrl: getCoverUrl(r.book_cover),
+        author: '',
+        description: ''
+      }
+    }));
+  }
+
+  async createReview(review: ReviewDraft): Promise<Review> {
+    if (review.rating < 0 || review.rating > 5 || !Number.isInteger(review.rating * 2)) {
+      throw new Error('Ratings must be between 0 and 5 in 0.5 increments.');
+    }
+
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
+    const created: Review = {
+      id,
+      ...review,
+      status: 'published',
+      dateCreated: now,
+      dateUpdated: now,
+    };
+    await this.db.execute(
+      `INSERT INTO reviews (id, profile, book, rating, title, body, contains_spoilers, status, date_created, date_updated)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, review.profileId, review.bookId, review.rating, review.title ?? null, review.body, review.containsSpoilers ? 1 : 0, 'published', now, now],
+    );
+    return created;
+  }
+
+  async getReviewsForBook(bookId: string): Promise<Review[]> {
+    const rows = await this.db.getAll(
+      'SELECT * FROM reviews WHERE book = ? AND status = ? ORDER BY date_created DESC',
+      [bookId, 'published'],
+    );
+    return rows.map(this.mapRecordToReview);
+  }
+
+  async getReviewsByUser(profileId: string): Promise<Review[]> {
+    const rows = await this.db.getAll(
+      'SELECT * FROM reviews WHERE profile = ? ORDER BY date_created DESC',
+      [profileId],
+    );
+    return rows.map(this.mapRecordToReview);
+  }
+
+  private mapRecordToShelf = (row: any) => {
+    return {
+      id: row.id,
+      profileId: row.profile,
+      name: row.name,
+      slug: row.slug,
+      description: row.description,
+      isPrivate: row.is_private === 1,
+      sortOrder: row.sort_order,
+      dateCreated: row.date_created,
+      dateUpdated: row.date_updated,
+    };
+  };
+
+  private mapRecordToReview = (row: any): Review => ({
+    id: row.id,
+    profileId: row.profile,
+    bookId: row.book,
+    rating: Number(row.rating),
+    title: row.title ?? undefined,
+    body: row.body ?? '',
+    containsSpoilers: Number(row.contains_spoilers) === 1,
+    status: row.status ?? 'published',
+    dateCreated: row.date_created,
+    dateUpdated: row.date_updated,
+  });
+
+  async getDailyStreakCount(profileId: string): Promise<number> {
+    try {
+      const row: any = await this.db.getOptional('SELECT current_streak FROM profiles WHERE id = ?', [profileId]);
+      return row ? (row.current_streak || 0) : 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  async calculateAndSyncDailyStreak(): Promise<void> {
+    const profileId = 'guest'; // We would ideally get the current authenticated user's ID
+    try {
+      const row: any = await this.db.getOptional('SELECT current_streak, last_streak_date FROM profiles WHERE id = ?', [profileId]);
+      if (!row) return;
+      
+      const currentStreak = row.current_streak || 0;
+      const lastStreakDateStr = row.last_streak_date;
+      
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      
+      if (!lastStreakDateStr) {
+        await this.db.execute('UPDATE profiles SET current_streak = 1, last_streak_date = ? WHERE id = ?', [today.toISOString(), profileId]);
+        return;
+      }
+      
+      const lastDate = new Date(lastStreakDateStr);
+      const lastDateMidnight = new Date(lastDate.getFullYear(), lastDate.getMonth(), lastDate.getDate());
+      
+      const diffTime = Math.abs(today.getTime() - lastDateMidnight.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 0) {
+        // Already advanced today
+        return;
+      } else if (diffDays <= 3) {
+        // Within 48-hour grace period (diffDays = 1, 2, or 3)
+        await this.db.execute('UPDATE profiles SET current_streak = current_streak + 1, last_streak_date = ? WHERE id = ?', [today.toISOString(), profileId]);
+      } else {
+        // Reset streak
+        await this.db.execute('UPDATE profiles SET current_streak = 1, last_streak_date = ? WHERE id = ?', [today.toISOString(), profileId]);
+      }
+    } catch (e) {
+      console.error('Failed to update daily streak:', e);
+    }
+  }
+
+  async getReadingStats(profileId: string): Promise<{
+    totalBooksFinished: number;
+    totalPagesRead: number;
+    totalHoursListened: number;
+    pagesByMonth: { month: string; pages: number }[];
+    hoursByMonth: { month: string; hours: number }[];
+  }> {
+    // 1. Total books finished
+    const booksRes = await this.db.getAll<{count: number}>(`
+      SELECT COUNT(DISTINCT book) as count 
+      FROM chapter_progress 
+      WHERE profile = ? AND status = 'Completed'
+    `, [profileId]);
+    
+    // Also try user_books if the table exists locally, fall back to 0 if it doesn't
+    let totalBooksFinished = booksRes[0]?.count || 0;
+    try {
+      const userBooksRes = await this.db.getAll<{count: number}>(`
+        SELECT COUNT(*) as count FROM user_books WHERE profile = ? AND reading_status = 'completed'
+      `, [profileId]);
+      if (userBooksRes[0]?.count > totalBooksFinished) {
+        totalBooksFinished = userBooksRes[0].count;
+      }
+    } catch(e) {}
+
+    // 2. Pages read
+    // For simplicity we'll assume each progress_percent = 3 pages (standard 300 page book)
+    const pagesRes = await this.db.getAll<{ total_progress: number, month: string }>(`
+      SELECT 
+        SUM(progress_percent) as total_progress,
+        strftime('%Y-%m', completed_at) as month
+      FROM chapter_progress
+      WHERE profile = ? AND completed_at IS NOT NULL
+      GROUP BY strftime('%Y-%m', completed_at)
+    `, [profileId]);
+    
+    const pagesByMonth = pagesRes.filter(r => r.month).map(r => ({
+      month: r.month,
+      pages: Math.floor((r.total_progress || 0) * 3)
+    }));
+    const totalPagesRead = pagesByMonth.reduce((sum, item) => sum + item.pages, 0);
+
+    // 3. Hours listened
+    const hoursRes = await this.db.getAll<{ total_seconds: number, month: string }>(`
+      SELECT 
+        SUM(position_seconds) as total_seconds,
+        strftime('%Y-%m', last_listened_at) as month
+      FROM audio_progress
+      WHERE profile = ? AND last_listened_at IS NOT NULL
+      GROUP BY strftime('%Y-%m', last_listened_at)
+    `, [profileId]);
+    
+    const hoursByMonth = hoursRes.filter(r => r.month).map(r => ({
+      month: r.month,
+      hours: Math.floor((r.total_seconds || 0) / 3600)
+    }));
+    const totalHoursListened = hoursByMonth.reduce((sum, item) => sum + item.hours, 0);
+
+    return {
+      totalBooksFinished,
+      totalPagesRead,
+      totalHoursListened,
+      pagesByMonth,
+      hoursByMonth
+    };
+  }
+
+  async getUserAchievements(profileId: string): Promise<{
+    id: string;
+    achievement_id: string;
+    awarded_at: string;
+    name: string;
+    description: string;
+    badge_icon: string;
+  }[]> {
+    return await this.db.getAll<{
+      id: string;
+      achievement_id: string;
+      awarded_at: string;
+      name: string;
+      description: string;
+      badge_icon: string;
+    }>(`
+      SELECT ua.id, ua.achievement_id, ua.awarded_at, a.name, a.description, a.badge_icon
+      FROM user_achievements ua
+      JOIN achievements a ON ua.achievement_id = a.id
+      WHERE ua.profile = ?
+      ORDER BY ua.awarded_at DESC
+    `, [profileId]);
   }
 }

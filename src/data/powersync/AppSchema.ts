@@ -188,6 +188,24 @@ export const chapter_progress = new Table({
   last_read_at: column.text,
 }, { indexes: { profile_chapter: ['profile', 'chapter'] } });
 
+export const follows = new Table({
+  follower: column.text,
+  following: column.text,
+  date_created: column.text,
+}, { indexes: { follower: ['follower'], following: ['following'] } });
+
+export const reviews = new Table({
+  profile: column.text,
+  book: column.text,
+  rating: column.real,
+  title: column.text,
+  body: column.text,
+  contains_spoilers: column.integer,
+  status: column.text,
+  date_created: column.text,
+  date_updated: column.text,
+}, { indexes: { book: ['book'], profile: ['profile'] } });
+
 export const reading_preferences = new Table({
   profile: column.text,
   font_family: column.text,
@@ -226,6 +244,34 @@ export const audio_progress = new Table({
   last_listened_at: column.text,
 }, { indexes: { profile_chapter: ['profile', 'audio_chapter'] } });
 
+export const profiles = new Table({
+  user: column.text,
+  status: column.text,
+  username: column.text,
+  display_name: column.text,
+  avatar: column.text,
+  bio: column.text,
+  website_url: column.text,
+  location: column.text,
+  is_verified: column.integer,
+  current_streak: column.integer,
+  last_streak_date: column.text,
+});
+
+export const achievements = new Table({
+  name: column.text,
+  description: column.text,
+  criteria_type: column.text,
+  threshold: column.integer,
+  badge_icon: column.text,
+});
+
+export const user_achievements = new Table({
+  profile: column.text,
+  achievement_id: column.text,
+  awarded_at: column.text,
+}, { indexes: { profile: ['profile'] } });
+
 export const AppSchema = new Schema({
   books,
   editions,
@@ -253,6 +299,11 @@ export const AppSchema = new Schema({
   annotations,
   dictionary_cache,
   audio_progress,
+  follows,
+  reviews,
+  profiles,
+  achievements,
+  user_achievements,
 });
 
 export type Database = (typeof AppSchema)['types'];

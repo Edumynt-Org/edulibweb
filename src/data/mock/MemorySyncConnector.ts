@@ -22,4 +22,9 @@ export class MemorySyncConnector implements ISyncConnector {
       pendingChangesCount: 0,
     };
   }
+
+  async migrateGuestData(profileId: string): Promise<void> {
+    // Mock implementation for guest data migration
+    return Promise.resolve();
+  }
 }

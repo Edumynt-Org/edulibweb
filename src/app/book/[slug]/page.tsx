@@ -4,6 +4,9 @@ import { useLibrary } from "../../../lib/providers/LibraryProvider";
 import { useEffect, useState } from "react";
 import { BookDetails } from "../../../domain/models/BookDetails";
 import { useParams, useRouter } from "next/navigation";
+import { LibraryStatusSelector } from "../../../components/ui/LibraryStatusSelector";
+import { ShelfSelector } from "../../../components/ui/ShelfSelector";
+import { ReviewsSection } from "../../../components/ui/ReviewsSection";
 
 // SVG Icons
 const ChevronDownIcon = () => (
@@ -173,6 +176,8 @@ export default function BookDetailsPage() {
           </h2>
           
           <div className="flex flex-col sm:flex-row flex-wrap gap-4 mb-8 w-full justify-center md:justify-start items-center sm:items-start">
+            <LibraryStatusSelector bookId={book.id} />
+            <ShelfSelector bookId={book.id} />
             {hasTextEditions && (
               <div className="flex w-full sm:w-auto rounded-full shadow-xl shadow-blue-500/20 transition-transform hover:-translate-y-0.5 active:translate-y-0 relative group">
                 <button 
@@ -371,7 +376,8 @@ export default function BookDetailsPage() {
         {/* Reviews Tab */}
         {activeTab === 'Reviews' && (
           <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <ReviewsSection bookId={book.id} />
+            {/*
               {/* Summary and Write Review */}
               <div className="md:col-span-1 bg-white dark:bg-zinc-900 rounded-2xl p-6 md:p-8 shadow-sm border border-zinc-200 dark:border-zinc-800 flex flex-col items-center text-center h-fit">
                 <h3 className="text-xl font-bold mb-2 dark:text-white">Community Rating</h3>
@@ -423,11 +429,10 @@ export default function BookDetailsPage() {
                   </div>
                 ))}
               </div>
-            </div>
+            */}
           </div>
         )}
       </div>
     </div>
   );
 }
-

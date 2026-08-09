@@ -1,12 +1,14 @@
 'use client';
 
 import Link from 'next/link';
+import { CustomShelvesList } from '../../components/ui/CustomShelvesList';
 
 export default function LibraryPage() {
   // In future epics this will show tracked books, reading progress, etc.
   return (
     <div className="p-6 sm:p-8 max-w-7xl mx-auto">
       <h1 className="text-3xl font-bold tracking-tight mb-8">My Library</h1>
+      
       <div className="py-16 text-center border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl">
         <svg className="mx-auto h-16 w-16 text-zinc-300 dark:text-zinc-700 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
@@ -24,6 +26,8 @@ export default function LibraryPage() {
           </Link>
         </div>
       </div>
+
+      <CustomShelvesList />
     </div>
   );
 }

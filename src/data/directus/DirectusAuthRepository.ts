@@ -1,12 +1,13 @@
 import { IAuthRepository } from '../../domain/repositories/IAuthRepository';
 import { AppUser } from '../../domain/models/User';
 import { ITokenStorage } from '../../domain/repositories/ITokenStorage';
+import { ISyncConnector } from '../../domain/repositories/ISyncConnector';
 
 export class DirectusAuthRepository implements IAuthRepository {
   private isRefreshing = false;
   private refreshPromise: Promise<void> | null = null;
 
-  constructor(private baseUrl: string, private tokenStorage?: ITokenStorage) {}
+  constructor(private baseUrl: string, private tokenStorage?: ITokenStorage, private syncConnector?: ISyncConnector) {}
 
   private async fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
     if (!this.tokenStorage) {
@@ -82,6 +83,10 @@ export class DirectusAuthRepository implements IAuthRepository {
       throw new Error('Failed to fetch user profile');
     }
 
+    if (this.syncConnector) {
+      await this.syncConnector.migrateGuestData(userResult.data.id);
+    }
+
     return {
       id: userResult.data.id,
       email: userResult.data.email,
@@ -153,6 +158,10 @@ export class DirectusAuthRepository implements IAuthRepository {
     if (!response.ok) {
       const errorMessage = result.errors?.[0]?.message || 'Registration failed';
       throw new Error(errorMessage);
+    }
+
+    if (this.syncConnector) {
+      await this.syncConnector.migrateGuestData(result.data.id);
     }
 
     return {
