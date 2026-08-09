@@ -528,7 +528,7 @@ export class PowerSyncLibraryRepository implements ILibraryRepository {
     const now = new Date().toISOString();
     
     await this.db.execute(`
-      INSERT INTO user_shelves (id, profile, name, slug, description, is_private, sort_order, date_created, date_updated)
+      INSERT INTO user_shelves (id, profile_id, name, slug, description, is_private, sort_order, date_created, date_updated)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [id, profileId, name, slug, description || null, isPrivate ? 1 : 0, 0, now, now]);
 
@@ -563,13 +563,13 @@ export class PowerSyncLibraryRepository implements ILibraryRepository {
   }
 
   async getPublicShelves(profileId: string): Promise<any[]> {
-    const rows = await this.db.getAll('SELECT * FROM user_shelves WHERE profile = ? AND is_private = 0 ORDER BY sort_order', [profileId]);
+    const rows = await this.db.getAll('SELECT * FROM user_shelves WHERE profile_id = ? AND is_private = 0 ORDER BY sort_order', [profileId]);
     return rows.map(this.mapRecordToShelf);
   }
 
   async getUserShelves(): Promise<any[]> {
     const profileId = 'guest';
-    const rows = await this.db.getAll('SELECT * FROM user_shelves WHERE profile = ? ORDER BY sort_order', [profileId]);
+    const rows = await this.db.getAll('SELECT * FROM user_shelves WHERE profile_id = ? ORDER BY sort_order', [profileId]);
     return rows.map(this.mapRecordToShelf);
   }
 
@@ -797,11 +797,11 @@ export class PowerSyncLibraryRepository implements ILibraryRepository {
       description: string;
       badge_icon: string;
     }>(`
-      SELECT ua.id, ua.achievement_id, ua.awarded_at, a.name, a.description, a.badge_icon
+      SELECT ua.id, ua.achievement_id, ua.date_created as awarded_at, a.name, a.description, a.badge_icon
       FROM user_achievements ua
       JOIN achievements a ON ua.achievement_id = a.id
-      WHERE ua.profile = ?
-      ORDER BY ua.awarded_at DESC
+      WHERE ua.profile_id = ?
+      ORDER BY ua.date_created DESC
     `, [profileId]);
   }
 }

@@ -13,9 +13,14 @@ export async function GET() {
       headers['Authorization'] = `Bearer ${accessToken}`;
     }
 
-    const response = await fetch(`${directusUrl}/powersync/token`, {
+    let response = await fetch(`${directusUrl}/powersync/token`, {
       headers,
     });
+
+    if (response.status === 401) {
+      // Token might be expired. Fall back to anonymous token to not break offline sync.
+      response = await fetch(`${directusUrl}/powersync/token`);
+    }
 
     if (!response.ok) {
       return NextResponse.json({ error: `Directus responded with ${response.status}` }, { status: response.status });

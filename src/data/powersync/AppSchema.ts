@@ -272,6 +272,19 @@ export const user_achievements = new Table({
   awarded_at: column.text,
 }, { indexes: { profile: ['profile'] } });
 
+export const user_books = new Table({
+  profile: column.text,
+  book: column.text,
+  reading_status: column.text,
+  selected_text_edition: column.text,
+  selected_audio_edition: column.text,
+  is_favorite: column.integer,
+  date_started: column.text,
+  date_finished: column.text,
+  last_activity_at: column.text,
+  notes: column.text,
+}, { indexes: { profile_book: ['profile', 'book'] } });
+
 export const userShelves = new Table(
   {
     profile_id: column.text,
@@ -349,6 +362,7 @@ export const AppSchema = new Schema({
   reviews,
   profiles,
   achievements,
+  user_books,
   user_achievements: userAchievements,
   user_shelves: userShelves,
   user_shelf_items: userShelfItems,
