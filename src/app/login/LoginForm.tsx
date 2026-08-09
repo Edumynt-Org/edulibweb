@@ -23,7 +23,8 @@ export default function LoginForm() {
     try {
       // Setup the auth repository with token storage
       const tokenStorage = new ClientTokenStorage();
-      const authRepo = new DirectusAuthRepository('http://localhost:8056', tokenStorage, syncConnector);
+      const directusUrl = process.env.NEXT_PUBLIC_DIRECTUS_URL || 'http://localhost:8056';
+      const authRepo = new DirectusAuthRepository(directusUrl, tokenStorage, syncConnector);
       
       await authRepo.login(email, password);
       const redirect = searchParams.get('redirect');

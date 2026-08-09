@@ -20,7 +20,8 @@ export default function RegisterPage() {
         clearTokens: async () => {}
       }; // basic dummy for register since register doesn't set tokens in Directus by default (unless we login after)
       
-      const authRepo = new DirectusAuthRepository('http://localhost:8056', tokenStorage, syncConnector);
+      const directusUrl = process.env.NEXT_PUBLIC_DIRECTUS_URL || 'http://localhost:8056';
+      const authRepo = new DirectusAuthRepository(directusUrl, tokenStorage, syncConnector);
       await authRepo.register(data.email, data.password, data.fullName, data.username);
       setSuccess(true);
     } catch (err: any) {

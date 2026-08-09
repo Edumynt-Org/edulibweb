@@ -26,7 +26,8 @@ export function AppShell({ children, isAuthenticated }: AppShellProps) {
 
   const handleLogout = async () => {
     const tokenStorage = new ClientTokenStorage();
-    const authRepo = new DirectusAuthRepository('http://localhost:8056', tokenStorage);
+    const directusUrl = process.env.NEXT_PUBLIC_DIRECTUS_URL || 'http://localhost:8056';
+    const authRepo = new DirectusAuthRepository(directusUrl, tokenStorage);
     try { await authRepo.logout(); } catch(e) {}
     await clearTokens();
     router.refresh(); // Refresh server components to pick up new auth state
