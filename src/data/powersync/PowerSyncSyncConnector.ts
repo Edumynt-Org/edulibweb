@@ -61,11 +61,11 @@ export class PowerSyncSyncConnector implements ISyncConnector {
   }
   async migrateGuestData(profileId: string): Promise<void> {
     // 1. Migrate chapter_progress
-    const anonChapters = await this.db.getAll(
+    const anonChapters: any[] = await this.db.getAll(
       "SELECT * FROM chapter_progress WHERE profile IS NULL OR profile = 'anonymous' OR profile = ''"
     );
     for (const anon of anonChapters) {
-      const existing = await this.db.getOptional(
+      const existing: any = await this.db.getOptional(
         "SELECT * FROM chapter_progress WHERE profile = ? AND chapter = ?",
         [profileId, anon.chapter]
       );
@@ -89,11 +89,11 @@ export class PowerSyncSyncConnector implements ISyncConnector {
     }
 
     // 2. Migrate audio_progress
-    const anonAudio = await this.db.getAll(
+    const anonAudio: any[] = await this.db.getAll(
       "SELECT * FROM audio_progress WHERE profile IS NULL OR profile = 'anonymous' OR profile = ''"
     );
     for (const anon of anonAudio) {
-      const existing = await this.db.getOptional(
+      const existing: any = await this.db.getOptional(
         "SELECT * FROM audio_progress WHERE profile = ? AND audio_chapter = ?",
         [profileId, anon.audio_chapter]
       );
@@ -116,11 +116,11 @@ export class PowerSyncSyncConnector implements ISyncConnector {
     }
 
     // 3. Migrate reading_preferences
-    const anonPrefs = await this.db.getAll(
+    const anonPrefs: any[] = await this.db.getAll(
       "SELECT * FROM reading_preferences WHERE profile IS NULL OR profile = 'anonymous' OR profile = ''"
     );
     for (const anon of anonPrefs) {
-      const existing = await this.db.getOptional(
+      const existing: any = await this.db.getOptional(
         "SELECT * FROM reading_preferences WHERE profile = ?",
         [profileId]
       );

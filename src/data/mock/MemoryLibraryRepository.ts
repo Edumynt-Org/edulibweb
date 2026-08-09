@@ -264,4 +264,8 @@ export class MemoryLibraryRepository implements ILibraryRepository {
       this.audioProgress.push(progress);
     }
   }
+
+  async calculateAndSyncDailyStreak(): Promise<void> {
+    console.log('Mock: Calculated and synced daily streak');
+  }
 }
