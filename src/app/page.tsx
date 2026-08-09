@@ -21,7 +21,7 @@ export default function Home() {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[50vh]">
-        <div className="text-zinc-500 animate-pulse text-lg">Loading catalog...</div>
+        <div className="text-zinc-500 animate-pulse text-lg">Loading books...</div>
       </div>
     );
   }
@@ -33,7 +33,7 @@ export default function Home() {
           Discover
         </h1>
         <p className="text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl">
-          Explore our open-source catalog of timeless classics and new arrivals.
+          Explore our open-source collection of timeless classics and new arrivals.
         </p>
       </div>
 
@@ -85,7 +85,7 @@ export default function Home() {
         {lists.length === 0 && (
           <div className="py-12 text-center border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl">
             <p className="text-zinc-500 text-lg">No book lists available.</p>
-            <p className="text-zinc-400 mt-2">The catalog might be syncing or empty.</p>
+            <p className="text-zinc-400 mt-2">The collection might be syncing or empty.</p>
           </div>
         )}
       </div>

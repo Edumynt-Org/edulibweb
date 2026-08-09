@@ -23,7 +23,7 @@ export default function CatalogPage() {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[50vh]">
-        <div className="text-zinc-500 animate-pulse text-lg">Loading catalog...</div>
+        <div className="text-zinc-500 animate-pulse text-lg">Loading books...</div>
       </div>
     );
   }
@@ -33,7 +33,7 @@ export default function CatalogPage() {
       <h1 className="text-3xl font-bold tracking-tight mb-8">All Books</h1>
       {books.length === 0 ? (
         <div className="py-12 text-center border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl">
-          <p className="text-zinc-500 text-lg">No books found in the catalog.</p>
+          <p className="text-zinc-500 text-lg">No books found.</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
