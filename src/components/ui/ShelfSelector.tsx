@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useLibrary } from '../../lib/providers/LibraryProvider';
 import { useRouter } from 'next/navigation';
-import { getAccessToken } from '../../../actions/auth';
+import { getAccessToken } from '../../actions/auth';
 import { UserShelf } from '../../domain/models/UserShelf';
 
 export function ShelfSelector({ bookId }: { bookId: string }) {

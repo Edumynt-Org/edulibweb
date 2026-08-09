@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useRouter } from 'next/navigation';
-import { getAccessToken } from '../../../actions/auth';
+import { getAccessToken } from '../../actions/auth';
 import { Review } from '../../domain/models/Review';
 import { useLibrary } from '../../lib/providers/LibraryProvider';
 

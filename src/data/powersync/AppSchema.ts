@@ -272,6 +272,52 @@ export const user_achievements = new Table({
   awarded_at: column.text,
 }, { indexes: { profile: ['profile'] } });
 
+export const userShelves = new Table(
+  {
+    profile_id: column.text,
+    name: column.text,
+    slug: column.text,
+    description: column.text,
+    is_private: column.integer,
+    sort_order: column.integer,
+    date_created: column.text,
+    date_updated: column.text,
+  },
+  {
+    indexes: {
+      profile_id: ['profile_id'],
+      slug: ['slug'],
+    },
+  }
+);
+
+export const userShelfItems = new Table(
+  {
+    shelf_id: column.text,
+    book_id: column.text,
+    date_created: column.text,
+  },
+  {
+    indexes: {
+      shelf_id: ['shelf_id'],
+      book_id: ['book_id'],
+    },
+  }
+);
+
+export const userAchievements = new Table(
+  {
+    profile_id: column.text,
+    achievement_id: column.text,
+    date_created: column.text,
+  },
+  {
+    indexes: {
+      profile_id: ['profile_id'],
+    },
+  }
+);
+
 export const AppSchema = new Schema({
   books,
   editions,
@@ -303,7 +349,9 @@ export const AppSchema = new Schema({
   reviews,
   profiles,
   achievements,
-  user_achievements,
+  user_achievements: userAchievements,
+  user_shelves: userShelves,
+  user_shelf_items: userShelfItems,
 });
 
 export type Database = (typeof AppSchema)['types'];

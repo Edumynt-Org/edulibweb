@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useLibrary } from '../../lib/providers/LibraryProvider';
 import { useRouter } from 'next/navigation';
 
-import { getAccessToken } from '../../../actions/auth';
+import { getAccessToken } from '../../actions/auth';
 
 export function LibraryStatusSelector({ bookId }: { bookId: string }) {
   const library = useLibrary();

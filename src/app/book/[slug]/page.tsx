@@ -377,59 +377,7 @@ export default function BookDetailsPage() {
         {activeTab === 'Reviews' && (
           <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
             <ReviewsSection bookId={book.id} />
-            {/*
-              {/* Summary and Write Review */}
-              <div className="md:col-span-1 bg-white dark:bg-zinc-900 rounded-2xl p-6 md:p-8 shadow-sm border border-zinc-200 dark:border-zinc-800 flex flex-col items-center text-center h-fit">
-                <h3 className="text-xl font-bold mb-2 dark:text-white">Community Rating</h3>
-                <div className="text-5xl font-extrabold text-zinc-900 dark:text-zinc-100 my-4">4.8</div>
-                <div className="flex gap-1 mb-2">
-                  <StarIcon filled />
-                  <StarIcon filled />
-                  <StarIcon filled />
-                  <StarIcon filled />
-                  <StarIcon />
-                </div>
-                <div className="text-zinc-500 text-sm mb-8">Based on 128 reviews</div>
-                
-                <hr className="w-full border-zinc-200 dark:border-zinc-800 mb-8" />
-                
-                <h4 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-4">Share your thoughts</h4>
-                <button className="w-full py-3 bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-900 font-semibold rounded-xl transition-colors">
-                  Write a Review
-                </button>
-              </div>
 
-              {/* Reviews List */}
-              <div className="md:col-span-2 space-y-4">
-                {[1, 2, 3].map((_, i) => (
-                  <div key={i} className="bg-white dark:bg-zinc-900 rounded-2xl p-6 shadow-sm border border-zinc-200 dark:border-zinc-800">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white font-bold">
-                          {['A', 'J', 'S'][i]}
-                        </div>
-                        <div>
-                          <div className="font-semibold text-zinc-900 dark:text-zinc-100">{['Alice', 'John', 'Sarah'][i]}</div>
-                          <div className="text-xs text-zinc-500">2 days ago</div>
-                        </div>
-                      </div>
-                      <div className="flex gap-0.5">
-                        <StarIcon filled />
-                        <StarIcon filled />
-                        <StarIcon filled />
-                        <StarIcon filled />
-                        <StarIcon filled={i === 2 ? false : true} />
-                      </div>
-                    </div>
-                    <p className="text-zinc-700 dark:text-zinc-300 leading-relaxed">
-                      {i === 0 && "An absolute masterpiece. The pacing was perfect and I couldn't put it down."}
-                      {i === 1 && "Great read, highly recommended for anyone interested in this genre. The characters are well developed."}
-                      {i === 2 && "Good book overall, though the middle dragged a little bit. Still worth the time."}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            */}
           </div>
         )}
       </div>
