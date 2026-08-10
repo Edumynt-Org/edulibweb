@@ -37,18 +37,12 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
       try {
         const db = new PowerSyncDatabase({ schema: AppSchema, database: { dbFilename: 'edumynt.sqlite' } });
         
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Connection timed out after 10 seconds.')), 10000);
-        });
-
         await db.init();
         
         const connector = new PowerSyncConnector();
         
-        await Promise.race([
-          db.connect(connector),
-          timeoutPromise
-        ]);
+        // Connect in the background (non-blocking) so the app loads instantly from local SQLite!
+        db.connect(connector).catch(console.error);
 
         if (!isMounted) return;
 
