@@ -40,6 +40,14 @@ export class MemoryAuthRepository implements IAuthRepository {
     // No-op for memory repo
   }
 
+  async requestPasswordReset(email: string, resetUrl: string): Promise<void> {
+    // No-op for memory repo
+  }
+
+  async resetPassword(token: string, password: string): Promise<void> {
+    // No-op for memory repo
+  }
+
   async migrateGuestState(_newProfileId: string): Promise<void> {
     // Simulated guest state migration
   }
