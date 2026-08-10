@@ -7,4 +7,6 @@ export interface IAuthRepository {
   refreshSession(): Promise<void>;
   migrateGuestState(newProfileId: string): Promise<void>;
   register(email: string, password: string, displayName: string, username: string): Promise<AppUser>;
+  requestPasswordReset(email: string): Promise<void>;
+  resetPassword(token: string, password: string): Promise<void>;
 }

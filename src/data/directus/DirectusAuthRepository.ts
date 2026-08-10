@@ -198,4 +198,18 @@ export class DirectusAuthRepository implements IAuthRepository {
       throw new Error(result.errors?.[0]?.message || 'Failed to request password reset');
     }
   }
+
+  async resetPassword(token: string, password: string): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/auth/password/reset`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, password }),
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      const result = text ? JSON.parse(text) : {};
+      throw new Error(result.errors?.[0]?.message || 'Failed to reset password');
+    }
+  }
 }
