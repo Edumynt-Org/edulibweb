@@ -2,12 +2,12 @@
 
 import { useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useAuth } from '../../contexts/AuthContext';
+import { DirectusAuthRepository } from '../../data/directus/DirectusAuthRepository';
+import { ClientTokenStorage } from '../../data/auth/ClientTokenStorage';
 
 export default function ResetPasswordPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { authRepository } = useAuth();
   const token = searchParams.get('token');
 
   const [password, setPassword] = useState('');
@@ -34,32 +34,15 @@ export default function ResetPasswordPage() {
       return;
     }
 
-    if (!authRepository) {
-      setStatus('error');
-      setErrorMessage('Auth repository not initialized');
-      return;
-    }
-
     setStatus('loading');
     setErrorMessage('');
 
     try {
-      // Check if authRepository has resetPassword method, otherwise fetch directly
-      if ('resetPassword' in authRepository) {
-        await (authRepository as any).resetPassword(token, password);
-      } else {
-        const directusUrl = process.env.NEXT_PUBLIC_DIRECTUS_URL || 'http://localhost:8056';
-        const response = await fetch(`${directusUrl}/auth/password/reset`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token, password }),
-        });
-        
-        if (!response.ok) {
-          const result = await response.json().catch(() => ({}));
-          throw new Error(result.errors?.[0]?.message || 'Failed to reset password');
-        }
-      }
+      const tokenStorage = new ClientTokenStorage();
+      const directusUrl = process.env.NEXT_PUBLIC_DIRECTUS_URL || 'http://localhost:8056';
+      const authRepo = new DirectusAuthRepository(directusUrl, tokenStorage);
+      
+      await authRepo.resetPassword(token, password);
       
       setStatus('success');
       setTimeout(() => {
