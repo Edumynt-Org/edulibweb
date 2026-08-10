@@ -3,12 +3,10 @@
 import React from 'react';
 import RegistrationForm from './RegistrationForm';
 import { DirectusAuthRepository } from '../../data/directus/DirectusAuthRepository';
-import { useSyncConnector } from '../../lib/providers/LibraryProvider';
 
 export default function RegisterPage() {
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState(false);
-  const syncConnector = useSyncConnector();
 
   const handleRegistration = async (data: any) => {
     setError(null);
@@ -21,7 +19,7 @@ export default function RegisterPage() {
       }; // dummy for register since register doesn't set tokens in Directus by default
       
       const directusUrl = process.env.NEXT_PUBLIC_DIRECTUS_URL || 'http://localhost:8056';
-      const authRepo = new DirectusAuthRepository(directusUrl, tokenStorage, syncConnector);
+      const authRepo = new DirectusAuthRepository(directusUrl, tokenStorage);
       
       // Native register using first_name and last_name as requested
       await authRepo.register(data.email, data.password, data.firstName, data.lastName);

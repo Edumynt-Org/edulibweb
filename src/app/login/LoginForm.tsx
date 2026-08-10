@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { DirectusAuthRepository } from '../../data/directus/DirectusAuthRepository';
 import { ClientTokenStorage } from '../../data/auth/ClientTokenStorage';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useSyncConnector } from '../../lib/providers/LibraryProvider';
 
 export default function LoginForm() {
   const [email, setEmail] = useState('');
@@ -13,7 +12,6 @@ export default function LoginForm() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const syncConnector = useSyncConnector();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,7 +22,7 @@ export default function LoginForm() {
       // Setup the auth repository with token storage
       const tokenStorage = new ClientTokenStorage();
       const directusUrl = process.env.NEXT_PUBLIC_DIRECTUS_URL || 'http://localhost:8056';
-      const authRepo = new DirectusAuthRepository(directusUrl, tokenStorage, syncConnector);
+      const authRepo = new DirectusAuthRepository(directusUrl, tokenStorage);
       
       await authRepo.login(email, password);
       const redirect = searchParams.get('redirect');

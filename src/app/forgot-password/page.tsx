@@ -3,14 +3,12 @@
 import React from 'react';
 import Link from 'next/link';
 import { DirectusAuthRepository } from '../../data/directus/DirectusAuthRepository';
-import { useSyncConnector } from '../../lib/providers/LibraryProvider';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = React.useState('');
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
-  const syncConnector = useSyncConnector();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,7 +24,7 @@ export default function ForgotPasswordPage() {
       };
       
       const directusUrl = process.env.NEXT_PUBLIC_DIRECTUS_URL || 'http://localhost:8056';
-      const authRepo = new DirectusAuthRepository(directusUrl, tokenStorage, syncConnector);
+      const authRepo = new DirectusAuthRepository(directusUrl, tokenStorage);
       await authRepo.requestPasswordReset(email);
       setSuccess(true);
     } catch (err: any) {
