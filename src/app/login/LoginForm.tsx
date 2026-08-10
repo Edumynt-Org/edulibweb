@@ -97,6 +97,12 @@ export default function LoginForm() {
           Create one
         </a>
       </div>
+
+      <div className="text-center pt-4 mt-4 border-t border-gray-100 dark:border-gray-800">
+        <a href="/" className="text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+          Skip for now
+        </a>
+      </div>
     </form>
   );
 }

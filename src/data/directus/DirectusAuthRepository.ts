@@ -182,10 +182,14 @@ export class DirectusAuthRepository implements IAuthRepository {
   }
 
   async requestPasswordReset(email: string): Promise<void> {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
     const response = await fetch(`${this.baseUrl}/auth/password/request`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ 
+        email, 
+        reset_url: `${origin}/reset-password`
+      }),
     });
 
     if (!response.ok) {
