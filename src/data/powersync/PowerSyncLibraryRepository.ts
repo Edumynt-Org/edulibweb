@@ -669,7 +669,7 @@ export class PowerSyncLibraryRepository implements ILibraryRepository {
 
   async getDailyStreakCount(profileId: string): Promise<number> {
     try {
-      const row: any = await this.db.getOptional('SELECT current_streak FROM profiles WHERE id = ?', [profileId]);
+      const row: any = await this.db.getOptional('SELECT current_streak FROM user_profiles WHERE "user" = ?', [profileId]);
       return row ? (row.current_streak || 0) : 0;
     } catch (e) {
       return 0;
@@ -679,7 +679,7 @@ export class PowerSyncLibraryRepository implements ILibraryRepository {
   async calculateAndSyncDailyStreak(): Promise<void> {
     const profileId = 'guest'; // We would ideally get the current authenticated user's ID
     try {
-      const row: any = await this.db.getOptional('SELECT current_streak, last_streak_date FROM profiles WHERE id = ?', [profileId]);
+      const row: any = await this.db.getOptional('SELECT current_streak, last_streak_date FROM user_profiles WHERE "user" = ?', [profileId]);
       if (!row) return;
       
       const currentStreak = row.current_streak || 0;
@@ -689,7 +689,7 @@ export class PowerSyncLibraryRepository implements ILibraryRepository {
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       
       if (!lastStreakDateStr) {
-        await this.db.execute('UPDATE profiles SET current_streak = 1, last_streak_date = ? WHERE id = ?', [today.toISOString(), profileId]);
+        await this.db.execute('UPDATE user_profiles SET current_streak = 1, last_streak_date = ? WHERE "user" = ?', [today.toISOString(), profileId]);
         return;
       }
       
@@ -704,10 +704,10 @@ export class PowerSyncLibraryRepository implements ILibraryRepository {
         return;
       } else if (diffDays <= 3) {
         // Within 48-hour grace period (diffDays = 1, 2, or 3)
-        await this.db.execute('UPDATE profiles SET current_streak = current_streak + 1, last_streak_date = ? WHERE id = ?', [today.toISOString(), profileId]);
+        await this.db.execute('UPDATE user_profiles SET current_streak = current_streak + 1, last_streak_date = ? WHERE "user" = ?', [today.toISOString(), profileId]);
       } else {
         // Reset streak
-        await this.db.execute('UPDATE profiles SET current_streak = 1, last_streak_date = ? WHERE id = ?', [today.toISOString(), profileId]);
+        await this.db.execute('UPDATE user_profiles SET current_streak = 1, last_streak_date = ? WHERE "user" = ?', [today.toISOString(), profileId]);
       }
     } catch (e) {
       console.error('Failed to update daily streak:', e);

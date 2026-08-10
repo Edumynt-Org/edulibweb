@@ -17,7 +17,7 @@ export class PowerSyncProfileRepository implements IProfileRepository {
   async getProfileIdByUsername(username: string): Promise<string | null> {
     try {
       const result = await this.db.getOptional(`
-        SELECT id FROM profiles WHERE username = ?
+        SELECT id FROM user_profiles WHERE username = ?
       `, [username]);
       return result ? (result as any).id : null;
     } catch (e) {

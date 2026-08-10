@@ -42,45 +42,61 @@ export default function LoginForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4 max-w-md mx-auto p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold mb-4 text-center">Log In</h2>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-6 w-full max-w-sm mx-auto">
+      <div className="text-center mb-2">
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Welcome Back</h2>
+        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Sign in to your account to continue.</p>
+      </div>
       
-      {error && <div className="p-3 bg-red-100 text-red-700 rounded-md">{error}</div>}
+      {error && (
+        <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-lg text-sm">
+          {error}
+        </div>
+      )}
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="email">Email</label>
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="email" className="text-sm font-medium text-gray-700 dark:text-gray-300">Email Address</label>
         <input 
           id="email"
           type="email" 
           value={email} 
           onChange={e => setEmail(e.target.value)}
           required 
-          className="border p-2 rounded-md dark:bg-gray-700 dark:border-gray-600"
+          className="border p-2.5 rounded-lg border-gray-300 dark:border-gray-700 dark:bg-zinc-800 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+          placeholder="you@example.com"
         />
       </div>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="password">Password</label>
+      <div className="flex flex-col gap-1.5">
+        <div className="flex justify-between items-center">
+          <label htmlFor="password" className="text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+          <a href="/forgot-password" className="text-xs text-blue-600 hover:text-blue-500 font-medium hover:underline">Forgot Password?</a>
+        </div>
         <input 
           id="password"
           type="password" 
           value={password} 
           onChange={e => setPassword(e.target.value)}
           required 
-          className="border p-2 rounded-md dark:bg-gray-700 dark:border-gray-600"
+          className="border p-2.5 rounded-lg border-gray-300 dark:border-gray-700 dark:bg-zinc-800 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+          placeholder="••••••••"
         />
-        <div className="text-right mt-1">
-          <a href="/forgot-password" className="text-sm text-blue-600 hover:underline">Forgot Password?</a>
-        </div>
       </div>
 
       <button 
         type="submit" 
         disabled={loading}
-        className="mt-4 bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
+        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium p-3 rounded-lg mt-2 transition-colors shadow-sm disabled:opacity-50"
       >
-        {loading ? 'Logging in...' : 'Log In'}
+        {loading ? 'Logging in...' : 'Sign In'}
       </button>
+
+      <div className="text-center pt-2">
+        <span className="text-gray-500 text-sm">Don't have an account? </span>
+        <a href="/register" className="text-sm text-blue-600 hover:text-blue-500 font-medium hover:underline">
+          Create one
+        </a>
+      </div>
     </form>
   );
 }

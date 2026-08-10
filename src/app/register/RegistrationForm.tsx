@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Link from 'next/link';
 
 interface RegistrationFormProps {
   onSubmit?: (data: any) => void;
@@ -6,10 +7,10 @@ interface RegistrationFormProps {
 
 export default function RegistrationForm({ onSubmit }: RegistrationFormProps) {
   const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
     email: '',
-    password: '',
-    fullName: '',
-    username: ''
+    password: ''
   });
   
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -23,10 +24,10 @@ export default function RegistrationForm({ onSubmit }: RegistrationFormProps) {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
     
-    if (!formData.email) newErrors.email = 'Email is required';
-    if (!formData.password) newErrors.password = 'Password is required';
-    if (!formData.fullName) newErrors.fullName = 'Full Name is required';
-    if (!formData.username) newErrors.username = 'Username is required';
+    if (!formData.firstName) newErrors.firstName = 'Required';
+    if (!formData.lastName) newErrors.lastName = 'Required';
+    if (!formData.email) newErrors.email = 'Required';
+    if (!formData.password) newErrors.password = 'Required';
     
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -40,62 +41,75 @@ export default function RegistrationForm({ onSubmit }: RegistrationFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full max-w-sm">
-      <div className="flex flex-col gap-1">
-        <label htmlFor="email">Email</label>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-6 w-full">
+      <div className="flex flex-row gap-4">
+        <div className="flex flex-col gap-1.5 w-1/2">
+          <label htmlFor="firstName" className="text-sm font-medium text-gray-700 dark:text-gray-300">First Name</label>
+          <input 
+            id="firstName" 
+            name="firstName" 
+            type="text" 
+            value={formData.firstName} 
+            onChange={handleChange} 
+            className="border p-2.5 rounded-lg border-gray-300 dark:border-gray-700 dark:bg-zinc-800 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+            placeholder="John"
+          />
+          {errors.firstName && <span className="text-red-500 text-xs">{errors.firstName}</span>}
+        </div>
+        
+        <div className="flex flex-col gap-1.5 w-1/2">
+          <label htmlFor="lastName" className="text-sm font-medium text-gray-700 dark:text-gray-300">Last Name</label>
+          <input 
+            id="lastName" 
+            name="lastName" 
+            type="text" 
+            value={formData.lastName} 
+            onChange={handleChange} 
+            className="border p-2.5 rounded-lg border-gray-300 dark:border-gray-700 dark:bg-zinc-800 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+            placeholder="Doe"
+          />
+          {errors.lastName && <span className="text-red-500 text-xs">{errors.lastName}</span>}
+        </div>
+      </div>
+      
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="email" className="text-sm font-medium text-gray-700 dark:text-gray-300">Email Address</label>
         <input 
           id="email" 
           name="email" 
           type="email" 
           value={formData.email} 
           onChange={handleChange} 
-          className="border p-2 rounded"
+          className="border p-2.5 rounded-lg border-gray-300 dark:border-gray-700 dark:bg-zinc-800 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+          placeholder="you@example.com"
         />
-        {errors.email && <span className="text-red-500 text-sm">{errors.email}</span>}
+        {errors.email && <span className="text-red-500 text-xs">{errors.email}</span>}
       </div>
       
-      <div className="flex flex-col gap-1">
-        <label htmlFor="password">Password</label>
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="password" className="text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
         <input 
           id="password" 
           name="password" 
           type="password" 
           value={formData.password} 
           onChange={handleChange} 
-          className="border p-2 rounded"
+          className="border p-2.5 rounded-lg border-gray-300 dark:border-gray-700 dark:bg-zinc-800 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+          placeholder="••••••••"
         />
-        {errors.password && <span className="text-red-500 text-sm">{errors.password}</span>}
+        {errors.password && <span className="text-red-500 text-xs">{errors.password}</span>}
       </div>
       
-      <div className="flex flex-col gap-1">
-        <label htmlFor="fullName">Full Name</label>
-        <input 
-          id="fullName" 
-          name="fullName" 
-          type="text" 
-          value={formData.fullName} 
-          onChange={handleChange} 
-          className="border p-2 rounded"
-        />
-        {errors.fullName && <span className="text-red-500 text-sm">{errors.fullName}</span>}
-      </div>
-      
-      <div className="flex flex-col gap-1">
-        <label htmlFor="username">Username</label>
-        <input 
-          id="username" 
-          name="username" 
-          type="text" 
-          value={formData.username} 
-          onChange={handleChange} 
-          className="border p-2 rounded"
-        />
-        {errors.username && <span className="text-red-500 text-sm">{errors.username}</span>}
-      </div>
-      
-      <button type="submit" className="bg-blue-600 text-white p-2 rounded mt-2 hover:bg-blue-700">
-        Register
+      <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium p-3 rounded-lg mt-2 transition-colors shadow-sm">
+        Create Account
       </button>
+
+      <div className="text-center pt-2">
+        <span className="text-gray-500 text-sm">Already have an account? </span>
+        <Link href="/login" className="text-sm text-blue-600 hover:text-blue-500 font-medium hover:underline">
+          Sign In
+        </Link>
+      </div>
     </form>
   );
 }

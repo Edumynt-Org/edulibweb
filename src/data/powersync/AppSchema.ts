@@ -244,18 +244,14 @@ export const audio_progress = new Table({
   last_listened_at: column.text,
 }, { indexes: { profile_chapter: ['profile', 'audio_chapter'] } });
 
-export const profiles = new Table({
+export const user_profiles = new Table({
   user: column.text,
-  status: column.text,
   username: column.text,
-  display_name: column.text,
-  avatar: column.text,
   bio: column.text,
-  website_url: column.text,
-  location: column.text,
-  is_verified: column.integer,
   current_streak: column.integer,
   last_streak_date: column.text,
+  date_created: column.text,
+  date_updated: column.text,
 });
 
 export const achievements = new Table({
@@ -360,7 +356,7 @@ export const AppSchema = new Schema({
   audio_progress,
   follows,
   reviews,
-  profiles,
+  user_profiles,
   achievements,
   user_books,
   user_achievements: userAchievements,

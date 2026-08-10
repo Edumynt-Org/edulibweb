@@ -56,6 +56,16 @@ export function AppShell({ children, isAuthenticated }: AppShellProps) {
     )}] : []),
   ];
 
+  const isAuthRoute = pathname === '/login' || pathname === '/register' || pathname === '/forgot-password' || pathname === '/verify-email';
+
+  if (isAuthRoute) {
+    return (
+      <div className="min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-zinc-50">
+        {children}
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-zinc-50 overflow-hidden">
       {/* Desktop Sidebar */}

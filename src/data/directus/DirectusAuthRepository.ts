@@ -148,15 +148,8 @@ export class DirectusAuthRepository implements IAuthRepository {
     }
   }
 
-  async register(email: string, password: string, displayName: string, username: string): Promise<AppUser> {
-    const nameParts = displayName.trim().split(' ');
-    const firstName = nameParts[0] || '';
-    const lastName = nameParts.slice(1).join(' ') || '';
-
-    // Encode the username into last_name so the backend flow can parse it
-    // because /users/register explicitly blocks all custom fields natively.
-    const encodedLastName = JSON.stringify({ ln: lastName, un: username });
-
+  async register(email: string, password: string, firstName: string, lastName: string): Promise<AppUser> {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
     const response = await fetch(`${this.baseUrl}/users/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -164,7 +157,8 @@ export class DirectusAuthRepository implements IAuthRepository {
         email,
         password,
         first_name: firstName,
-        last_name: encodedLastName,
+        last_name: lastName,
+        verification_url: `${origin}/verify-email`,
       }),
     });
 
@@ -176,16 +170,13 @@ export class DirectusAuthRepository implements IAuthRepository {
       throw new Error(errorMessage);
     }
 
-    if (this.syncConnector && result.data?.id) {
-      await this.syncConnector.migrateGuestData(result.data.id);
-    }
-
+    // Directus /users/register returns 204 No Content for security
     return {
-      id: result.data?.id || 'unknown',
-      email: result.data?.email || email,
-      username: result.data?.username || result.data?.first_name || result.data?.email || username,
-      displayName: result.data?.first_name || displayName,
-      role: '0e0d3c31-4754-4856-bbe8-71ff7803e082',
+      id: 'pending',
+      email: email,
+      username: firstName || email,
+      displayName: firstName,
+      role: 'pending',
       isAnonymous: false,
     };
   }
