@@ -40,7 +40,7 @@ export class MemoryAuthRepository implements IAuthRepository {
     // No-op for memory repo
   }
 
-  async requestPasswordReset(email: string, resetUrl: string): Promise<void> {
+  async requestPasswordReset(email: string): Promise<void> {
     // No-op for memory repo
   }
 
