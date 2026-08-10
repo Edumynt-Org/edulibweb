@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -11,13 +11,18 @@ function VerifyEmailContent() {
   
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [errorMessage, setErrorMessage] = useState('');
+  const hasAttempted = useRef(false);
 
   useEffect(() => {
+    if (hasAttempted.current) return;
+    
     if (!token) {
       setStatus('error');
       setErrorMessage('Verification token is missing from the URL.');
       return;
     }
+
+    hasAttempted.current = true;
 
     const verifyEmail = async () => {
       try {
