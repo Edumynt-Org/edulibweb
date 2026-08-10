@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { ILibraryRepository } from '../../domain/repositories/ILibraryRepository';
 import { MemoryLibraryRepository } from '../../data/mock/MemoryLibraryRepository';
 import { PowerSyncLibraryRepository } from '../../data/powersync/PowerSyncLibraryRepository';
@@ -21,6 +22,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
   const [profileRepo, setProfileRepo] = useState<import('../../domain/repositories/IProfileRepository').IProfileRepository | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [useMemoryFallback, setUseMemoryFallback] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     let isMounted = true;
@@ -28,7 +30,6 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
     if (useMemoryFallback) {
       setRepository(new MemoryLibraryRepository());
       setSyncConnector(new MemorySyncConnector());
-      // Lazy load the fallback memory profile repository if needed, or simply let it fail gracefully
       return;
     }
 
@@ -36,17 +37,14 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
       try {
         const db = new PowerSyncDatabase({ schema: AppSchema, database: { dbFilename: 'edumynt.sqlite' } });
         
-        // Setup a connection timeout
         const timeoutPromise = new Promise((_, reject) => {
           setTimeout(() => reject(new Error('Connection timed out after 10 seconds.')), 10000);
         });
 
-        // Initialize DB
         await db.init();
         
         const connector = new PowerSyncConnector();
         
-        // Race the connection against the timeout
         await Promise.race([
           db.connect(connector),
           timeoutPromise
@@ -74,7 +72,9 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
     return () => { isMounted = false; };
   }, [useMemoryFallback]);
 
-  if (error && (!repository || !syncConnector)) {
+  const isAuthRoute = pathname === '/login' || pathname === '/register' || pathname === '/forgot-password' || pathname === '/verify-email';
+
+  if (error && (!repository || !syncConnector) && !isAuthRoute) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen bg-gray-50 dark:bg-black p-4 text-center space-y-4">
         <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 text-red-600 rounded-full flex items-center justify-center mb-2 shadow-sm">
@@ -105,19 +105,57 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
   }
 
   if (!repository || !syncConnector) {
+    if (isAuthRoute) {
+      return (
+        <LibraryContext.Provider value={repository as any}>
+          <SyncConnectorContext.Provider value={syncConnector as any}>
+            <ProfileRepositoryContext.Provider value={profileRepo as any}>
+              {children}
+            </ProfileRepositoryContext.Provider>
+          </SyncConnectorContext.Provider>
+        </LibraryContext.Provider>
+      );
+    }
+
     return (
-      <div className="flex flex-col justify-center items-center min-h-screen bg-gray-50 dark:bg-black space-y-6">
-        <div className="relative w-16 h-16">
-          <div className="absolute inset-0 rounded-full border-4 border-gray-200 dark:border-gray-800"></div>
-          <div className="absolute inset-0 rounded-full border-4 border-blue-600 border-t-transparent animate-spin"></div>
+      <div className="flex h-screen bg-zinc-50 dark:bg-black overflow-hidden animate-pulse">
+        {/* Sidebar Skeleton */}
+        <div className="hidden md:flex flex-col w-64 border-r border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-6">
+          <div className="h-8 bg-zinc-200 dark:bg-zinc-800 rounded-lg w-32 mb-8"></div>
+          <div className="space-y-4">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="h-10 bg-zinc-200 dark:bg-zinc-800 rounded-xl w-full"></div>
+            ))}
+          </div>
         </div>
-        <div className="text-gray-600 dark:text-gray-400 font-medium animate-pulse">Connecting to library...</div>
-        <button 
-          onClick={() => setUseMemoryFallback(true)}
-          className="mt-8 text-sm text-blue-600 hover:text-blue-500 underline underline-offset-2"
-        >
-          Skip & Continue Offline
-        </button>
+        {/* Main Content Skeleton */}
+        <div className="flex-1 flex flex-col min-w-0">
+          <header className="h-16 px-6 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 flex items-center justify-between">
+            <div className="h-8 bg-zinc-200 dark:bg-zinc-800 rounded-full w-64"></div>
+            <div className="h-8 bg-zinc-200 dark:bg-zinc-800 rounded-full w-8"></div>
+          </header>
+          <main className="flex-1 p-6 overflow-hidden flex flex-col">
+            <div className="h-8 bg-zinc-200 dark:bg-zinc-800 rounded-lg w-48 mb-6"></div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(i => (
+                <div key={i} className="flex flex-col space-y-3">
+                  <div className="aspect-[2/3] bg-zinc-200 dark:bg-zinc-800 rounded-lg w-full"></div>
+                  <div className="h-4 bg-zinc-200 dark:bg-zinc-800 rounded w-3/4"></div>
+                  <div className="h-3 bg-zinc-200 dark:bg-zinc-800 rounded w-1/2"></div>
+                </div>
+              ))}
+            </div>
+            
+            <div className="mt-auto pt-6 flex justify-center">
+              <button 
+                onClick={() => setUseMemoryFallback(true)}
+                className="px-4 py-2 text-sm text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 underline underline-offset-2 transition-colors"
+              >
+                Skip & Continue Offline
+              </button>
+            </div>
+          </main>
+        </div>
       </div>
     );
   }
