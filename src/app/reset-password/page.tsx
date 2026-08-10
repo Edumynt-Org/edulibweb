@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { DirectusAuthRepository } from '../../data/directus/DirectusAuthRepository';
 import { ClientTokenStorage } from '../../data/auth/ClientTokenStorage';
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get('token');
@@ -112,5 +112,13 @@ export default function ResetPasswordPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <React.Suspense fallback={<div className="min-h-screen bg-gray-50 dark:bg-black p-4 flex items-center justify-center">Loading...</div>}>
+      <ResetPasswordContent />
+    </React.Suspense>
   );
 }
