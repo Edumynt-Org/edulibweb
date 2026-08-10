@@ -26,10 +26,10 @@ export class PowerSyncConnector implements PowerSyncBackendConnector {
       
       if (!response.ok) {
         console.error('Failed to upload data:', response.status);
-        // Throwing will let PowerSync retry later if it's a network issue,
-        // but if it's a 403 (permissions), we might want to discard. For now, complete it to clear the queue if 4xx.
-        if (response.status >= 500) {
-          throw new Error('Server error during upload');
+        // If 401, the token is expired. Throwing will allow PowerSync to retry once the token is refreshed by the app.
+        // If 5xx, it's a server issue, throw to retry.
+        if (response.status === 401 || response.status >= 500) {
+          throw new Error(`Upload failed with status ${response.status}`);
         }
       }
 

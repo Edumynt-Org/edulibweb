@@ -13,10 +13,12 @@ import { MemorySyncConnector } from '../../data/mock/MemorySyncConnector';
 
 const LibraryContext = createContext<ILibraryRepository | null>(null);
 const SyncConnectorContext = createContext<ISyncConnector | null>(null);
+const ProfileRepositoryContext = createContext<import('../../domain/repositories/IProfileRepository').IProfileRepository | null>(null);
 
 export function LibraryProvider({ children }: { children: React.ReactNode }) {
   const [repository, setRepository] = useState<ILibraryRepository | null>(null);
   const [syncConnector, setSyncConnector] = useState<ISyncConnector | null>(null);
+  const [profileRepo, setProfileRepo] = useState<import('../../domain/repositories/IProfileRepository').IProfileRepository | null>(null);
 
   useEffect(() => {
     const db = new PowerSyncDatabase({ schema: AppSchema, database: { dbFilename: 'edumynt.sqlite' } });
@@ -28,6 +30,9 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
       const sConnector = new PowerSyncSyncConnector(db, connector);
       sConnector.connect();
       setSyncConnector(sConnector);
+
+      const { PowerSyncProfileRepository } = await import('../../data/powersync/PowerSyncProfileRepository');
+      setProfileRepo(new PowerSyncProfileRepository(db));
     }).catch(err => {
       console.error('Failed to init PowerSync, falling back to Memory', err);
       setRepository(new MemoryLibraryRepository());
@@ -46,7 +51,9 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
   return (
     <LibraryContext.Provider value={repository}>
       <SyncConnectorContext.Provider value={syncConnector}>
-        {children}
+        <ProfileRepositoryContext.Provider value={profileRepo!}>
+          {children}
+        </ProfileRepositoryContext.Provider>
       </SyncConnectorContext.Provider>
     </LibraryContext.Provider>
   );
@@ -64,6 +71,14 @@ export function useSyncConnector(): ISyncConnector {
   const context = useContext(SyncConnectorContext);
   if (!context) {
     throw new Error('useSyncConnector must be used within a LibraryProvider');
+  }
+  return context;
+}
+
+export function useProfileRepository(): import('../../domain/repositories/IProfileRepository').IProfileRepository {
+  const context = useContext(ProfileRepositoryContext);
+  if (!context) {
+    throw new Error('useProfileRepository must be used within a LibraryProvider');
   }
   return context;
 }

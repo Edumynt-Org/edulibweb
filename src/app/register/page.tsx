@@ -36,7 +36,7 @@ export default function RegisterPage() {
         {error && <div className="text-red-500 bg-red-100 p-2 rounded">{error}</div>}
         {success ? (
           <div className="text-green-600 bg-green-100 p-4 rounded text-center">
-            Registration successful! You can now log in.
+            Registration successful! Please check your email for the verification link before logging in.
           </div>
         ) : (
           <RegistrationForm onSubmit={handleRegistration} />

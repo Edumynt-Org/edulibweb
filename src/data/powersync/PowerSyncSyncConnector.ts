@@ -137,5 +137,30 @@ export class PowerSyncSyncConnector implements ISyncConnector {
       "UPDATE annotations SET profile = ? WHERE profile IS NULL OR profile = 'anonymous' OR profile = ''",
       [profileId]
     );
+
+    // 5. Migrate user_books
+    const anonUserBooks: any[] = await this.db.getAll(
+      "SELECT * FROM user_books WHERE profile IS NULL OR profile = 'anonymous' OR profile = ''"
+    );
+    for (const anon of anonUserBooks) {
+      const existing: any = await this.db.getOptional(
+        "SELECT * FROM user_books WHERE profile = ? AND book = ?",
+        [profileId, anon.book]
+      );
+      if (existing) {
+        const anonTime = anon.last_activity_at ? new Date(anon.last_activity_at).getTime() : 0;
+        const existTime = existing.last_activity_at ? new Date(existing.last_activity_at).getTime() : 0;
+        
+        if (anonTime > existTime) {
+          await this.db.execute(
+            "UPDATE user_books SET reading_status = ?, selected_text_edition = ?, selected_audio_edition = ?, is_favorite = ?, date_started = ?, date_finished = ?, last_activity_at = ?, notes = ? WHERE id = ?",
+            [anon.reading_status, anon.selected_text_edition, anon.selected_audio_edition, anon.is_favorite, anon.date_started, anon.date_finished, anon.last_activity_at, anon.notes, existing.id]
+          );
+        }
+        await this.db.execute("DELETE FROM user_books WHERE id = ?", [anon.id]);
+      } else {
+        await this.db.execute("UPDATE user_books SET profile = ? WHERE id = ?", [profileId, anon.id]);
+      }
+    }
   }
 }

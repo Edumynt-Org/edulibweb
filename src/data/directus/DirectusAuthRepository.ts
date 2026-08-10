@@ -139,40 +139,68 @@ export class DirectusAuthRepository implements IAuthRepository {
   }
 
   async migrateGuestState(newProfileId: string): Promise<void> {
-    throw new Error('Method not implemented.');
+    if (this.syncConnector) {
+      try {
+        await this.syncConnector.migrateGuestData(newProfileId);
+      } catch (e) {
+        throw new Error(`Failed to migrate guest data: ${e}`);
+      }
+    }
   }
 
   async register(email: string, password: string, displayName: string, username: string): Promise<AppUser> {
-    const response = await fetch(`${this.baseUrl}/users`, {
+    const nameParts = displayName.trim().split(' ');
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
+
+    // Encode the username into last_name so the backend flow can parse it
+    // because /users/register explicitly blocks all custom fields natively.
+    const encodedLastName = JSON.stringify({ ln: lastName, un: username });
+
+    const response = await fetch(`${this.baseUrl}/users/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         email,
         password,
-        first_name: displayName,
-        username, 
-        role: '0e0d3c31-4754-4856-bbe8-71ff7803e082',
+        first_name: firstName,
+        last_name: encodedLastName,
       }),
     });
 
-    const result = await response.json();
+    const text = await response.text();
+    const result = text ? JSON.parse(text) : {};
 
     if (!response.ok) {
       const errorMessage = result.errors?.[0]?.message || 'Registration failed';
       throw new Error(errorMessage);
     }
 
-    if (this.syncConnector) {
+    if (this.syncConnector && result.data?.id) {
       await this.syncConnector.migrateGuestData(result.data.id);
     }
 
     return {
-      id: result.data.id,
-      email: result.data.email,
-      username: result.data.username || result.data.first_name || result.data.email,
-      displayName: result.data.first_name,
+      id: result.data?.id || 'unknown',
+      email: result.data?.email || email,
+      username: result.data?.username || result.data?.first_name || result.data?.email || username,
+      displayName: result.data?.first_name || displayName,
       role: '0e0d3c31-4754-4856-bbe8-71ff7803e082',
       isAnonymous: false,
     };
+  }
+
+  async requestPasswordReset(email: string): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/auth/password/request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      const result = text ? JSON.parse(text) : {};
+      throw new Error(result.errors?.[0]?.message || 'Failed to request password reset');
+    }
   }
 }

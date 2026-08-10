@@ -14,6 +14,18 @@ export class PowerSyncProfileRepository implements IProfileRepository {
     this.currentUserId = userId;
   }
 
+  async getProfileIdByUsername(username: string): Promise<string | null> {
+    try {
+      const result = await this.db.getOptional(`
+        SELECT id FROM profiles WHERE username = ?
+      `, [username]);
+      return result ? (result as any).id : null;
+    } catch (e) {
+      console.error('Failed to fetch profile ID by username:', e);
+      return null;
+    }
+  }
+
   async followUser(targetProfileId: string): Promise<void> {
     try {
       if (this.currentUserId === 'guest') return;

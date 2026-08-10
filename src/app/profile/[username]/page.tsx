@@ -5,6 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { UserShelf } from '../../../domain/models/UserShelf';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import Link from 'next/link';
+import { useProfileRepository } from '../../../lib/providers/LibraryProvider';
+import { FollowButton } from '../../../components/ui/FollowButton';
 import { clearTokens } from '../../../actions/auth';
 import { ClientTokenStorage } from '../../../data/auth/ClientTokenStorage';
 import { DirectusAuthRepository } from '../../../data/directus/DirectusAuthRepository';
@@ -12,6 +14,7 @@ export default function ProfilePage() {
   const params = useParams();
   const username = params.username as string;
   const library = useLibrary();
+  const profileRepo = useProfileRepository();
   const router = useRouter();
   
   const [activeTab, setActiveTab] = useState<'shelves' | 'stats'>('shelves');
@@ -117,6 +120,9 @@ export default function ProfilePage() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
         </button>
+      </div>
+      <div className="mb-8">
+        <FollowButton targetUsername={username} repository={profileRepo} />
       </div>
 
       {/* Settings Modal */}

@@ -69,6 +69,9 @@ export default function LoginForm() {
           required 
           className="border p-2 rounded-md dark:bg-gray-700 dark:border-gray-600"
         />
+        <div className="text-right mt-1">
+          <a href="/forgot-password" className="text-sm text-blue-600 hover:underline">Forgot Password?</a>
+        </div>
       </div>
 
       <button 

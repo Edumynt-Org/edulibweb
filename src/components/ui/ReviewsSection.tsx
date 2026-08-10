@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { getAccessToken } from '../../actions/auth';
 import { Review } from '../../domain/models/Review';
 import { useLibrary } from '../../lib/providers/LibraryProvider';
@@ -37,9 +38,16 @@ function ReviewCard({ review }: { review: Review }) {
   return (
     <article className="bg-white dark:bg-zinc-900 rounded-2xl p-6 shadow-sm border border-zinc-200 dark:border-zinc-800">
       <div className="flex items-center justify-between gap-4 mb-4">
-        <div>
-          <p className="font-semibold text-zinc-900 dark:text-zinc-100">Reader review</p>
-          <p className="text-xs text-zinc-500">{new Date(review.dateCreated).toLocaleDateString()}</p>
+        <div className="flex items-center gap-3">
+          <Link href={`/profile/${review.profileId}`} className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold uppercase shadow-sm shrink-0 hover:opacity-80 transition-opacity">
+            {review.profileId.charAt(0)}
+          </Link>
+          <div>
+            <Link href={`/profile/${review.profileId}`} className="font-semibold text-zinc-900 dark:text-zinc-100 hover:underline">
+              Reader review
+            </Link>
+            <p className="text-xs text-zinc-500">{new Date(review.dateCreated).toLocaleDateString()}</p>
+          </div>
         </div>
         <StarRating rating={review.rating} />
       </div>
